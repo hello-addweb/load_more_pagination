@@ -11,7 +11,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'pagination Demo',
+      title: 'Pagination Demo',
       theme: ThemeData(
         primarySwatch: Colors.red,
         platform: TargetPlatform.iOS,
@@ -24,16 +24,13 @@ class MyApp extends StatelessWidget {
 class MyHomePage extends StatefulWidget {
   const MyHomePage({
     Key? key,
-
   }) : super(key: key);
-
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-
   List<int> productList = [];
   bool isFinishLoadMore = false;
 
@@ -43,19 +40,23 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void initiateList() {
-    productList.addAll(List.generate(5, (v) => v));
+    productList.addAll(List.generate(10, (v) => v));
     setState(() {});
   }
 
   Future<bool> _loadMoreData() async {
-    await Future.delayed(const Duration(seconds: 0, milliseconds: 100));
+    await Future.delayed(const Duration(seconds: 2));
     initiateList();
+    if (productList.length >= 30) {
+      isFinishLoadMore = true;
+    }
     return true;
   }
 
   Future<void> _refresh() async {
-    await Future.delayed(const Duration(seconds: 0, milliseconds: 100));
+    await Future.delayed(const Duration(seconds: 2));
     productList.clear();
+    isFinishLoadMore = false;
     initiateList();
   }
 
@@ -67,16 +68,17 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: RefreshIndicator(
         onRefresh: _refresh,
-        child: LoadMore(
+        child: LoadMorePagination(
           isFinish: isFinishLoadMore,
-          onLoadMore: _loadMoreData,
+          onLoadMorePagination: _loadMoreData,
+          loaderColor: Colors.green,
           whenEmptyLoad: true,
-          delegate: const DefaultLoadMoreDelegate(),
-          textBuilder: DefaultLoadMoreTextBuilder.english,
+          delegate: const DefaultLoadMorePaginationDelegate(),
+          textBuilder: DefaultLoadMorePaginationTextBuilder.english,
           child: ListView.builder(
             itemBuilder: (BuildContext context, int index) {
               return ListTile(
-                title: Text('Product $index'),
+                title: Text('Product ${index + 1}'),
                 subtitle: const Text('Subtitle'),
               );
             },
@@ -86,6 +88,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
-
 }

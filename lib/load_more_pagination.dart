@@ -1,3 +1,6 @@
+/// Documentation
+///
+/// load_more_pagination library collection.
 library load_more_pagination;
 
 import 'dart:async';
@@ -9,11 +12,11 @@ typedef FutureCallBack = Future<bool> Function();
 
 ///
 /// Load more stateful widget class..
-class LoadMore extends StatefulWidget {
-  static DelegateBuilder<LoadMoreDelegate> buildDelegate =
-      () => const DefaultLoadMoreDelegate();
-  static DelegateBuilder<LoadMoreTextBuilder> buildTextBuilder =
-      () => DefaultLoadMoreTextBuilder.english;
+class LoadMorePagination extends StatefulWidget {
+  static DelegateBuilder<LoadMorePaginationDelegate> buildDelegate =
+      () => const DefaultLoadMorePaginationDelegate();
+  static DelegateBuilder<LoadMorePaginationTextBuilder> buildTextBuilder =
+      () => DefaultLoadMorePaginationTextBuilder.english;
 
   /// Only support [ListView],[SliverList]
   final Widget child;
@@ -21,24 +24,28 @@ class LoadMore extends StatefulWidget {
   /// return true is refresh success
   ///
   /// return false or null is fail
-  final FutureCallBack onLoadMore;
+  final FutureCallBack onLoadMorePagination;
 
   /// if [isFinish] is true, then loadMoreWidget status is [LoadMoreStatus.nomore].
   final bool isFinish;
 
-  /// see [LoadMoreDelegate]
-  final LoadMoreDelegate? delegate;
+  /// see [LoadMorePaginationDelegate]
+  final LoadMorePaginationDelegate? delegate;
 
-  /// see [LoadMoreTextBuilder]
-  final LoadMoreTextBuilder? textBuilder;
+  /// see [LoadMorePaginationTextBuilder]
+  final LoadMorePaginationTextBuilder? textBuilder;
 
-  /// when [whenEmptyLoad] is true, and when listView children length is 0,or the itemCount is 0,not build loadMoreWidget
+  /// when [whenEmptyLoad] is true, and when listView children length is 0,or the itemCount is 0,not build LoadMorePaginationWidget
   final bool whenEmptyLoad;
 
-  const LoadMore({
+  /// see [LoadMorePaginationTextBuilder]
+  final Color loaderColor;
+
+  const LoadMorePagination({
     Key? key,
     required this.child,
-    required this.onLoadMore,
+    required this.onLoadMorePagination,
+    required this.loaderColor,
     this.textBuilder,
     this.isFinish = false,
     this.delegate,
@@ -46,16 +53,16 @@ class LoadMore extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _LoadMoreState createState() => _LoadMoreState();
+  _LoadMorePaginationState createState() => _LoadMorePaginationState();
 }
 
 ///
 /// Load more state.
-class _LoadMoreState extends State<LoadMore> {
+class _LoadMorePaginationState extends State<LoadMorePagination> {
   Widget get child => widget.child;
 
-  LoadMoreDelegate get loadMoreDelegate =>
-      widget.delegate ?? LoadMore.buildDelegate();
+  LoadMorePaginationDelegate get loadMoreDelegate =>
+      widget.delegate ?? LoadMorePagination.buildDelegate();
 
   @override
   void initState() {
@@ -88,9 +95,9 @@ class _LoadMoreState extends State<LoadMore> {
     return child;
   }
 
-  final ValueNotifier<LoadMoreStatus> _loadMoreStatus =
-      ValueNotifier(LoadMoreStatus.idle);
-  LoadMoreStatus get status => _loadMoreStatus.value;
+  final ValueNotifier<LoadMorePaginationStatus> _loadMoreStatus =
+      ValueNotifier(LoadMorePaginationStatus.idle);
+  LoadMorePaginationStatus get status => _loadMoreStatus.value;
 
   /// if call the method, then the future is not null
   /// so, return a listview and  item count + 1
@@ -106,7 +113,7 @@ class _LoadMoreState extends State<LoadMore> {
       var viewCount = (delegate.estimatedChildCount ?? 0) + 1;
       builder(context, index) {
         if (index == viewCount - 1) {
-          return _buildLoadMoreView();
+          return _buildLoadMorePaginationView();
         }
         return delegate.builder(context, index) ?? Container();
       }
@@ -138,7 +145,7 @@ class _LoadMoreState extends State<LoadMore> {
         break outer;
       }
 
-      delegate.children.add(_buildLoadMoreView());
+      delegate.children.add(_buildLoadMorePaginationView());
       return ListView(
         addAutomaticKeepAlives: delegate.addAutomaticKeepAlives,
         addRepaintBoundaries: delegate.addRepaintBoundaries,
@@ -178,7 +185,7 @@ class _LoadMoreState extends State<LoadMore> {
       final viewCount = (delegate.estimatedChildCount ?? 0) + 1;
       builder(context, index) {
         if (index == viewCount - 1) {
-          return _buildLoadMoreView();
+          return _buildLoadMorePaginationView();
         }
         return delegate.builder(context, index) ?? Container();
       }
@@ -201,7 +208,7 @@ class _LoadMoreState extends State<LoadMore> {
       if (!widget.whenEmptyLoad && delegate.estimatedChildCount == 0) {
         break outer;
       }
-      delegate.children.add(_buildLoadMoreView());
+      delegate.children.add(_buildLoadMorePaginationView());
       return SliverList(
         delegate: SliverChildListDelegate(
           delegate.children,
@@ -217,24 +224,25 @@ class _LoadMoreState extends State<LoadMore> {
     return list;
   }
 
-  Widget _buildLoadMoreView() {
+  Widget _buildLoadMorePaginationView() {
     if (widget.isFinish == true) {
-      _updateStatus(LoadMoreStatus.nomore);
+      _updateStatus(LoadMorePaginationStatus.nomore);
     } else {
-      if (status == LoadMoreStatus.nomore) {
-        _updateStatus(LoadMoreStatus.idle);
+      if (status == LoadMorePaginationStatus.nomore) {
+        _updateStatus(LoadMorePaginationStatus.idle);
       }
     }
     return NotificationListener<_RetryNotify>(
       onNotification: _onRetry,
       child: NotificationListener<_BuildNotify>(
-        onNotification: _onLoadMoreBuild,
+        onNotification: _onLoadMorePaginationBuild,
         child: NotificationListener<ScrollNotification>(
           onNotification: _handleScrollNotification,
-          child: DefaultLoadMoreView(
+          child: DefaultLoadMorePaginationView(
             status: status,
             delegate: loadMoreDelegate,
-            textBuilder: widget.textBuilder ?? LoadMore.buildTextBuilder(),
+            textBuilder:
+                widget.textBuilder ?? LoadMorePagination.buildTextBuilder(),
           ),
         ),
       ),
@@ -244,48 +252,48 @@ class _LoadMoreState extends State<LoadMore> {
   bool _handleScrollNotification(ScrollNotification notification) {
     final widgetHeight = loadMoreDelegate.widgetHeight(status);
     if (notification.metrics.extentAfter < widgetHeight) {
-      if (status == LoadMoreStatus.loading) {
+      if (status == LoadMorePaginationStatus.loading) {
         return false;
       }
-      if (status == LoadMoreStatus.nomore) {
+      if (status == LoadMorePaginationStatus.nomore) {
         return false;
       }
-      if (status == LoadMoreStatus.fail) {
+      if (status == LoadMorePaginationStatus.fail) {
         return false;
       }
-      if (status == LoadMoreStatus.outScreen) {
+      if (status == LoadMorePaginationStatus.outScreen) {
         return false;
       }
-      if (status == LoadMoreStatus.idle) {
+      if (status == LoadMorePaginationStatus.idle) {
         loadMore();
       }
     } else {
-      _updateStatus(LoadMoreStatus.outScreen);
+      _updateStatus(LoadMorePaginationStatus.outScreen);
     }
 
     return false;
   }
 
-  bool _onLoadMoreBuild(_BuildNotify notification) {
-    if (status == LoadMoreStatus.loading) {
+  bool _onLoadMorePaginationBuild(_BuildNotify notification) {
+    if (status == LoadMorePaginationStatus.loading) {
       return false;
     }
-    if (status == LoadMoreStatus.nomore) {
+    if (status == LoadMorePaginationStatus.nomore) {
       return false;
     }
-    if (status == LoadMoreStatus.fail) {
+    if (status == LoadMorePaginationStatus.fail) {
       return false;
     }
-    if (status == LoadMoreStatus.outScreen) {
+    if (status == LoadMorePaginationStatus.outScreen) {
       return false;
     }
-    if (status == LoadMoreStatus.idle) {
+    if (status == LoadMorePaginationStatus.idle) {
       loadMore();
     }
     return false;
   }
 
-  void _updateStatus(LoadMoreStatus status) {
+  void _updateStatus(LoadMorePaginationStatus status) {
     Future.delayed(Duration.zero, () {
       _loadMoreStatus.value = status;
     });
@@ -297,12 +305,12 @@ class _LoadMoreState extends State<LoadMore> {
   }
 
   void loadMore() {
-    _updateStatus(LoadMoreStatus.loading);
-    widget.onLoadMore().then((v) {
+    _updateStatus(LoadMorePaginationStatus.loading);
+    widget.onLoadMorePagination().then((v) {
       if (v == true) {
-        _updateStatus(LoadMoreStatus.idle);
+        _updateStatus(LoadMorePaginationStatus.idle);
       } else {
-        _updateStatus(LoadMoreStatus.fail);
+        _updateStatus(LoadMorePaginationStatus.fail);
       }
     });
   }
@@ -310,7 +318,7 @@ class _LoadMoreState extends State<LoadMore> {
 
 ///
 /// Load More status enums.
-enum LoadMoreStatus {
+enum LoadMorePaginationStatus {
   /// wait for loading
   idle,
 
@@ -328,31 +336,33 @@ enum LoadMoreStatus {
 }
 
 ///
-/// DefaultLoadMoreView stateful widget class.
-class DefaultLoadMoreView extends StatefulWidget {
-  final LoadMoreStatus status;
-  final LoadMoreDelegate delegate;
-  final LoadMoreTextBuilder textBuilder;
+/// DefaultLoadMorePaginationView stateful widget class.
+class DefaultLoadMorePaginationView extends StatefulWidget {
+  final LoadMorePaginationStatus status;
+  final LoadMorePaginationDelegate delegate;
+  final LoadMorePaginationTextBuilder textBuilder;
 
-  const DefaultLoadMoreView({
+  const DefaultLoadMorePaginationView({
     Key? key,
-    this.status = LoadMoreStatus.idle,
+    this.status = LoadMorePaginationStatus.idle,
     required this.delegate,
     required this.textBuilder,
   }) : super(key: key);
 
   @override
-  DefaultLoadMoreViewState createState() => DefaultLoadMoreViewState();
+  DefaultLoadMorePaginationViewState createState() =>
+      DefaultLoadMorePaginationViewState();
 }
 
-const _defaultLoadMoreHeight = 80.0;
+const _defaultLoadMorePaginationHeight = 80.0;
 const _loadMoreIndicatorSize = 33.0;
 const _loadMoreDelay = 16;
 
 ///
-/// Default LoadMore ViewState class.
-class DefaultLoadMoreViewState extends State<DefaultLoadMoreView> {
-  LoadMoreDelegate get delegate => widget.delegate;
+/// Default LoadMorePagination ViewState class.
+class DefaultLoadMorePaginationViewState
+    extends State<DefaultLoadMorePaginationView> {
+  LoadMorePaginationDelegate get delegate => widget.delegate;
 
   @override
   Widget build(BuildContext context) {
@@ -360,8 +370,8 @@ class DefaultLoadMoreViewState extends State<DefaultLoadMoreView> {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () {
-        if (widget.status == LoadMoreStatus.fail ||
-            widget.status == LoadMoreStatus.idle) {
+        if (widget.status == LoadMorePaginationStatus.fail ||
+            widget.status == LoadMorePaginationStatus.idle) {
           if (mounted) {
             _RetryNotify().dispatch(context);
           }
@@ -381,7 +391,7 @@ class DefaultLoadMoreViewState extends State<DefaultLoadMoreView> {
   void notify() async {
     var delay = max(delegate.loadMoreDelay(), const Duration(milliseconds: 16));
     await Future.delayed(delay);
-    if (widget.status == LoadMoreStatus.idle) {
+    if (widget.status == LoadMorePaginationStatus.idle) {
       if (mounted) {
         _BuildNotify().dispatch(context);
       }
@@ -410,40 +420,43 @@ typedef DelegateBuilder<T> = T Function();
 
 ///
 /// loadMore widget properties
-abstract class LoadMoreDelegate {
-  static DelegateBuilder<LoadMoreDelegate> buildWidget =
-      () => const DefaultLoadMoreDelegate();
+abstract class LoadMorePaginationDelegate {
+  static DelegateBuilder<LoadMorePaginationDelegate> buildWidget =
+      () => const DefaultLoadMorePaginationDelegate();
 
-  const LoadMoreDelegate();
+  const LoadMorePaginationDelegate();
 
   /// the loadMore widget height
-  double widgetHeight(LoadMoreStatus status) => _defaultLoadMoreHeight;
+  double widgetHeight(LoadMorePaginationStatus status) =>
+      _defaultLoadMorePaginationHeight;
 
   /// build loadMore delay
   Duration loadMoreDelay() => const Duration(milliseconds: _loadMoreDelay);
 
   Widget buildChild(
-    LoadMoreStatus status, {
-    LoadMoreTextBuilder builder = DefaultLoadMoreTextBuilder.english,
+    LoadMorePaginationStatus status, {
+    LoadMorePaginationTextBuilder builder =
+        DefaultLoadMorePaginationTextBuilder.english,
   });
 }
 
 ///
-/// DefaultLoadMoreDelegate class extends LoadMoreDelegate...
-class DefaultLoadMoreDelegate extends LoadMoreDelegate {
-  const DefaultLoadMoreDelegate();
+/// DefaultLoadMorePaginationDelegate class extends LoadMorePaginationDelegate...
+class DefaultLoadMorePaginationDelegate extends LoadMorePaginationDelegate {
+  const DefaultLoadMorePaginationDelegate();
 
   @override
-  Widget buildChild(LoadMoreStatus status,
-      {LoadMoreTextBuilder builder = DefaultLoadMoreTextBuilder.english}) {
+  Widget buildChild(LoadMorePaginationStatus status,
+      {LoadMorePaginationTextBuilder builder =
+          DefaultLoadMorePaginationTextBuilder.english}) {
     String text = builder(status);
-    if (status == LoadMoreStatus.fail) {
+    if (status == LoadMorePaginationStatus.fail) {
       return Text(text);
     }
-    if (status == LoadMoreStatus.idle) {
+    if (status == LoadMorePaginationStatus.idle) {
       return Text(text);
     }
-    if (status == LoadMoreStatus.loading) {
+    if (status == LoadMorePaginationStatus.loading) {
       return Container(
         alignment: Alignment.center,
         child: Row(
@@ -462,7 +475,7 @@ class DefaultLoadMoreDelegate extends LoadMoreDelegate {
         ),
       );
     }
-    if (status == LoadMoreStatus.nomore) {
+    if (status == LoadMorePaginationStatus.nomore) {
       return Text(text);
     }
 
@@ -471,24 +484,25 @@ class DefaultLoadMoreDelegate extends LoadMoreDelegate {
 }
 
 ///
-/// LoadMoreTextBuilder
-typedef LoadMoreTextBuilder = String Function(LoadMoreStatus status);
+/// LoadMorePaginationTextBuilder
+typedef LoadMorePaginationTextBuilder = String Function(
+    LoadMorePaginationStatus status);
 
 ///
 /// _buildEnglishText
-String _buildEnglishText(LoadMoreStatus status) {
+String _buildEnglishText(LoadMorePaginationStatus status) {
   String text;
   switch (status) {
-    case LoadMoreStatus.fail:
+    case LoadMorePaginationStatus.fail:
       text = "Tap to retry";
       break;
-    case LoadMoreStatus.idle:
+    case LoadMorePaginationStatus.idle:
       text = "";
       break;
-    case LoadMoreStatus.loading:
+    case LoadMorePaginationStatus.loading:
       text = "Loading...";
       break;
-    case LoadMoreStatus.nomore:
+    case LoadMorePaginationStatus.nomore:
       text = " ";
       break;
     default:
@@ -498,7 +512,7 @@ String _buildEnglishText(LoadMoreStatus status) {
 }
 
 ///
-/// DefaultLoadMoreTextBuilder class.
-class DefaultLoadMoreTextBuilder {
-  static const LoadMoreTextBuilder english = _buildEnglishText;
+/// DefaultLoadMorePaginationTextBuilder class.
+class DefaultLoadMorePaginationTextBuilder {
+  static const LoadMorePaginationTextBuilder english = _buildEnglishText;
 }
