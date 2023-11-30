@@ -168,6 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 ```dart
 class OrdersNotificationController extends GetxController {
+  
   Repository repository = Repository();
   RxList<OrderListModel> myOrdersList = <OrderListModel>[].obs;
   RxBool isFinishLoadMore = false.obs;
@@ -203,7 +204,6 @@ class OrdersNotificationController extends GetxController {
   }
 }
 
-
 class MyOrdersScreen extends StatefulWidget {
   const MyOrdersScreen({Key? key}) : super(key: key);
   @override
@@ -216,70 +216,68 @@ class _MyOrdersScreenState extends State<MyOrdersScreen> {
 
   @override
   void initState() {
-  WidgetsBinding.instance.addPostFrameCallback((Duration time) => init());
-  super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((Duration time) => init());
+    super.initState();
   }
 
   init() {
-  bool isLogin = CommonLogics.checkUserLogin();
-  if (isLogin) {
-  _ordersNC.isFinishLoadMore(false);
-  _ordersNC.pageNumber(1);
-  _ordersNC.getOrdersList(shouldShowLoader: false, isPageRefresh: true);
-  }
+    bool isLogin = CommonLogics.checkUserLogin();
+    if (isLogin) {
+      _ordersNC.isFinishLoadMore(false);
+      _ordersNC.pageNumber(1);
+      _ordersNC.getOrdersList(shouldShowLoader: false, isPageRefresh: true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-  return Scaffold(
-  backgroundColor: CommonColors.appBgColor,
-  body: Obx(() {
-  return _ordersNC.isOrdersListLoading.value
-  ? const Center(
-  child: CircularProgressIndicator(
-  color: CommonColors.appColor,
-  ),
-  )
-      : ScrollConfiguration(
-  behavior: const ScrollBehavior().copyWith(overscroll: false),
-  child: RefreshIndicator(
-  onRefresh: () async {
-  _ordersNC.isFinishLoadMore(false);
-  _ordersNC.pageNumber(1);
-  await _ordersNC.getOrdersList(
-  shouldShowLoader: false, isPageRefresh: true);
-  return;
-  },
-  child: _ordersNC.myOrdersList.isNotEmpty
-  ? LoadMorePagination(
-  isFinish: _ordersNC.isFinishLoadMore.value,
-  onLoadMorePagination: _ordersNC.loadMore,
-  loaderColor: Colors.green,
-  textBuilder: DefaultLoadMoreTextBuilder.english,
-  child: ListView.builder(
-  shrinkWrap: true,
-  itemCount: _ordersNC.myOrdersList.length,
-  itemBuilder: (context, index) {
-  return GestureDetector(
-  onTap: () {
-  Get.to(() => OrderDetailsScreen(
-  orderId: _ordersNC
-      .myOrdersList[index]
-      .orderItemId,
-  ));
-  },
-  child: OrderTileWidget(
-  orderListItem:
-  _ordersNC.myOrdersList[index],
-  ));
-  }))
-      : const NoDataScreen(),
-  ),
-  );
-  }));
+    return Scaffold(
+        backgroundColor: CommonColors.appBgColor,
+        body: Obx(() {
+          return _ordersNC.isOrdersListLoading.value
+              ? const Center(
+            child: CircularProgressIndicator(
+              color: CommonColors.appColor,
+            ),
+          )
+              : ScrollConfiguration(
+            behavior: const ScrollBehavior().copyWith(overscroll: false),
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _ordersNC.isFinishLoadMore(false);
+                _ordersNC.pageNumber(1);
+                await _ordersNC.getOrdersList(
+                    shouldShowLoader: false, isPageRefresh: true);
+                return;
+              },
+              child: _ordersNC.myOrdersList.isNotEmpty
+                  ? LoadMore(
+                  isFinish: _ordersNC.isFinishLoadMore.value,
+                  onLoadMore: _ordersNC.loadMore,
+                  textBuilder: DefaultLoadMoreTextBuilder.english,
+                  child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: _ordersNC.myOrdersList.length,
+                      itemBuilder: (context, index) {
+                        return GestureDetector(
+                            onTap: () {
+                              Get.to(() => OrderDetailsScreen(
+                                orderId: _ordersNC
+                                    .myOrdersList[index]
+                                    .orderItemId,
+                              ));
+                            },
+                            child: OrderTileWidget(
+                              orderListItem:
+                              _ordersNC.myOrdersList[index],
+                            ));
+                      }))
+                  : const NoDataScreen(),
+            ),
+          );
+        }));
   }
 }
-
 
 ``` 
 
