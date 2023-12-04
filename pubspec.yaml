@@ -1,6 +1,6 @@
 name: load_more_pagination
 description: "A load more pagination Extensible and highly customizable package to help you lazily load and display small chunks of items as the user scrolls down the screen."
-version: 0.0.1
+version: 0.0.2
 # author: AddWeb Solution Dev(Sultan Singh)
 homepage: https://github.com/hello-addweb/load_more_pagination
 
